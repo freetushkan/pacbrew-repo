@@ -1,0 +1,66 @@
+pkgname=ps5-payload-libmpv
+pkgver=0.39.0
+pkgrel=1
+pkgdesc='Command line video player (library only)'
+url='https://mpv.io/'
+arch=('any')
+license=('GPL')
+
+options=(!strip libtool staticlibs)
+source=("libmpv-${pkgver}.tar.gz::https://github.com/mpv-player/mpv/archive/v${pkgver}.tar.gz")
+sha256sums=('2ca92437affb62c2b559b4419ea4785c70d023590500e8a52e95ea3ab4554683')
+
+groups=('ps5-payload-dev')
+makedepends=('ps5-payload-sdk' 'ps5-payload-sdl2' 'ps5-payload-ffmpeg'
+        'ps5-payload-mesa' 'ps5-payload-libarchive' 'ps5-payload-libplacebo')
+
+prepare() {
+    if [ -z "${PS5_PAYLOAD_SDK}" ]; then
+	export PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk
+    fi
+
+    rm -rf "mpv-$pkgver/subprojects"
+}
+
+build() {
+    source "${PS5_PAYLOAD_SDK}/toolchain/prospero.sh"
+    cd "mpv-$pkgver"
+
+    export LDFLAGS="${LDFLAGS} -lc++"
+    export CFLAGS="-Wno-thread-safety-analysis"
+    export CXXFLAGS="-Wno-thread-safety-analysis -std=c++17"
+    ${MESON} setup builddir \
+        -Dc_args="-Wno-error=deprecated" \
+        --prefix="${PREFIX}" \
+        --libdir="lib" \
+        -Dlibmpv=true \
+        -Ddefault_library=static \
+        -Dlibplacebo:vulkan=disabled \
+        -Dlibplacebo:glslang=disabled \
+        -Dlibplacebo:shaderc=disabled \
+        -Dlibplacebo:demos=false \
+        -Dsdl2=enabled \
+        -Dsdl2-audio=enabled \
+        -Dsdl2-gamepad=disabled \
+        -Dsdl2-video=enabled \
+        -Dplain-gl=enabled \
+        -Dgl=enabled \
+        -Degl=disabled \
+        -Dalsa=disabled \
+        -Djack=disabled \
+        -Dpipewire=disabled \
+        -Dx11=disabled \
+        -Dwayland=disabled \
+        -Dlcms2=disabled \
+        -Dlua=disabled \
+        -Djavascript=disabled
+
+    ${MESON} compile -vC builddir
+}
+
+package() {
+    source "${PS5_PAYLOAD_SDK}/toolchain/prospero.sh"
+    cd "mpv-$pkgver"
+
+    ${MESON} install -C builddir --destdir "${pkgdir}/${PS5_PAYLOAD_SDK}/target"
+}
