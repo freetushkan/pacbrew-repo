@@ -1,14 +1,16 @@
 pkgname=ps5-payload-libmpv
 pkgver=0.39.0
-pkgrel=1
+pkgrel=2
 pkgdesc='Command line video player (library only)'
 url='https://mpv.io/'
 arch=('any')
 license=('GPL')
 
 options=(!strip libtool staticlibs)
-source=("libmpv-${pkgver}.tar.gz::https://github.com/mpv-player/mpv/archive/v${pkgver}.tar.gz")
-sha256sums=('2ca92437affb62c2b559b4419ea4785c70d023590500e8a52e95ea3ab4554683')
+source=("libmpv-${pkgver}.tar.gz::https://github.com/mpv-player/mpv/archive/v${pkgver}.tar.gz"
+        "mkv-noindex-seek.patch")
+sha256sums=('2ca92437affb62c2b559b4419ea4785c70d023590500e8a52e95ea3ab4554683'
+            'SKIP')
 
 groups=('ps5-payload-dev')
 makedepends=('ps5-payload-sdk' 'ps5-payload-sdl2' 'ps5-payload-ffmpeg'
@@ -20,6 +22,7 @@ prepare() {
     fi
 
     rm -rf "mpv-$pkgver/subprojects"
+    patch -d "mpv-$pkgver" -Np1 -i "$srcdir/mkv-noindex-seek.patch"
 }
 
 build() {
